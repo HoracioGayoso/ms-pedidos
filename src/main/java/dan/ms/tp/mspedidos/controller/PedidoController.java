@@ -1,9 +1,10 @@
 package dan.ms.tp.mspedidos.controller;
 
+
 import java.util.List;
 import java.util.Optional;
 
-import dan.ms.tp.mspedidos.modelo.EstadoPedido;
+import dan.ms.tp.mspedidos.service.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,8 @@ import dan.ms.tp.mspedidos.modelo.Pedido;
 public class PedidoController {
     
     @Autowired PedidoRepository repo;
-
+    @Autowired
+    PedidoService pedidoService;
     @PostMapping
     public ResponseEntity<Pedido> guardar(@RequestBody Pedido pedido){
         return ResponseEntity.ok().body(repo.save(pedido));
@@ -31,20 +33,13 @@ public class PedidoController {
     public ResponseEntity<Optional<Pedido>> buscar(@RequestBody String pedidoId){
         return ResponseEntity.ok().body(repo.findById(pedidoId));
     }
-    @PutMapping("/cancelar")
-    public ResponseEntity<Pedido> cancelarPedido(@RequestBody String pedidoId){
-        Optional<Pedido> optionalPedido = repo.findById(pedidoId);
-        if (optionalPedido.isPresent()) {
-            Pedido pedido = optionalPedido.get();
-            // Realizar la lógica para cancelar el pedido aquí
-            // Por ejemplo, puedes cambiar el estado del pedido a "CANCELADO"
-            pedido.setEstado(EstadoPedido.CANCELADO); // ver como se settea un nuevo estado
-            // Guardar los cambios en la base de datos
-            pedido = repo.save(pedido);
-            return ResponseEntity.ok().body(pedido);
-        } else {
-            return ResponseEntity.notFound().build();
+    @PutMapping("/{id}/cancelar")
+    public ResponseEntity<?> cancelarPedido(@PathVariable String id) {
+        try {
+            Pedido pedidoCancelado = pedidoService.cancelPedido(id);
+            return ResponseEntity.ok().body(pedidoCancelado);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
 }
