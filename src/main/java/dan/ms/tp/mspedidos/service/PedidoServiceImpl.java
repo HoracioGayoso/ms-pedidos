@@ -4,6 +4,8 @@ import dan.ms.tp.mspedidos.dao.PedidoRepository;
 import dan.ms.tp.mspedidos.modelo.EstadoPedido;
 import dan.ms.tp.mspedidos.modelo.HistorialEstado;
 import dan.ms.tp.mspedidos.modelo.Pedido;
+import dan.ms.tp.mspedidos.modelo.PedidoDetalle;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -51,4 +53,50 @@ public class PedidoServiceImpl implements PedidoService {
             return null;
         }
     }
+    @Override
+    public Pedido createPedido(Pedido pedido) throws Exception {
+        //TODO: Desglosar todo en funciones
+        //Chequeos preliminares
+        if(pedido.getNumeroPedido() == null){
+            throw new Exception("Pedido no tiene numero de pedido");
+        }
+        else if(pedido.getCliente()==null){
+            throw new Exception("Pedido no tiene cliente");
+        }
+        else if (pedido.getDetallePedido()==null){
+            throw new Exception("Pedido no tiene detalle pedido");
+        }
+
+        HistorialEstado historialEstado = new HistorialEstado();
+        historialEstado.setUserEstado(pedido.getUser());
+        historialEstado.setFechaEstado(Instant.now());
+        historialEstado.setEstado(EstadoPedido.RECHAZADO);
+        Double montoTotal=0d;
+
+        for (PedidoDetalle detalle : pedido.getDetallePedido()) {
+                // Agregar chequeos necesarios
+                if(detalle.getProducto().getStock() ==0){
+                    throw new Exception("No hay stock del producto "  + detalle.getProducto().getNombre());
+                }
+                montoTotal += detalle.getProducto().getPrecio()*detalle.getCantidad()*(100-detalle.getDescuento());
+                historialEstado.setEstado(EstadoPedido.SIN_STOCK);
+        }
+        
+        /*
+        cliente.getMontoMaximo() 
+        if montoTotal > cliente.getMontoMaximo 
+        historialEstado.setEstado(EstadoPedido.RECHAZADO);
+        */
+
+        historialEstado.setEstado(EstadoPedido.RECIBIDO);
+        pedido.setFecha(Instant.now());
+        pedido.setTotal(montoTotal);
+        //refactor esto de estado
+        pedido.addEstado(historialEstado);
+        repo.save(pedido);
+        return pedido;
+    }
+
+
+
 }

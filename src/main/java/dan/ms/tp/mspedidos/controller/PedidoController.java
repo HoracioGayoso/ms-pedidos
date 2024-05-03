@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import dan.ms.tp.mspedidos.service.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +21,13 @@ public class PedidoController {
     @Autowired
     PedidoService pedidoService;
     @PostMapping
-    public ResponseEntity<Pedido> guardar(@RequestBody Pedido pedido){
-        return ResponseEntity.ok().body(repo.save(pedido));
+    public ResponseEntity<?> guardar(@RequestBody Pedido pedido){
+        try{
+        return ResponseEntity.ok().body(pedidoService.createPedido(pedido));}
+        catch(Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping

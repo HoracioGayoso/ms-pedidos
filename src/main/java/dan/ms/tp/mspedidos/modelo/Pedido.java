@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Data;
 
 @Data
-@Document(collection = "dan_pedidos")
+@Document(collection = "dan-pedidos")
 public class Pedido {
 
     @Id
@@ -86,7 +86,9 @@ public class Pedido {
     public void setEstados(List<HistorialEstado> estados) {
         this.estados = estados;
     }
-
+    public void addEstado(HistorialEstado estado) {
+        this.estados.add(estado);
+    }
     public Double getTotal() {
         return total;
     }
