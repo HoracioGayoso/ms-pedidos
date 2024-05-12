@@ -1,15 +1,21 @@
 package dan.ms.tp.mspedidos.service;
 
 import dan.ms.tp.mspedidos.dao.PedidoRepository;
+import dan.ms.tp.mspedidos.modelo.Cliente;
 import dan.ms.tp.mspedidos.modelo.EstadoPedido;
 import dan.ms.tp.mspedidos.modelo.HistorialEstado;
 import dan.ms.tp.mspedidos.modelo.Pedido;
 import dan.ms.tp.mspedidos.modelo.PedidoDetalle;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -54,9 +60,16 @@ public class PedidoServiceImpl implements PedidoService {
         }
     }
     @Override
-    public Pedido createPedido(Pedido pedido) throws Exception {
+    public Pedido createPedido(Pedido pedido, String token) throws Exception {
         //TODO: Desglosar todo en funciones
         //Chequeos preliminares
+        Cliente cliente;
+        try{
+        cliente = getClienteByPedido(pedido,token);}
+        catch(Exception e){
+            System.out.println("Fallo cliente");
+            throw new Exception("Can't get cliente");
+        }
         if(pedido.getNumeroPedido() == null){
             throw new Exception("Pedido no tiene numero de pedido");
         }
@@ -75,10 +88,12 @@ public class PedidoServiceImpl implements PedidoService {
 
         for (PedidoDetalle detalle : pedido.getDetallePedido()) {
                 // Agregar chequeos necesarios
-                if(detalle.getProducto().getStock() ==0){
+                if(detalle.getProducto().getStock()==0){
                     throw new Exception("No hay stock del producto "  + detalle.getProducto().getNombre());
                 }
-                montoTotal += detalle.getProducto().getPrecio()*detalle.getCantidad()*(100-detalle.getDescuento());
+                
+                //montoTotal += detalle.getProducto().getPrecio()*detalle.getCantidad()*(100-detalle.getDescuento());
+                montoTotal +=50;
                 historialEstado.setEstado(EstadoPedido.SIN_STOCK);
         }
         
@@ -91,10 +106,27 @@ public class PedidoServiceImpl implements PedidoService {
         historialEstado.setEstado(EstadoPedido.RECIBIDO);
         pedido.setFecha(Instant.now());
         pedido.setTotal(montoTotal);
+        pedido.setCliente(cliente);
         //refactor esto de estado
         pedido.addEstado(historialEstado);
         repo.save(pedido);
         return pedido;
+    }
+
+    private Cliente getClienteByPedido(Pedido pedido, String token) {
+        // TODO Auto-generated method stub
+        Cliente respuesta;
+        RestTemplate clienteTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization",token);
+        HttpEntity<String> entity = new HttpEntity<String>("", headers);
+        ResponseEntity<Cliente> respuestaCompleta = clienteTemplate.exchange(
+          "http://localhost:8080/usuarios/api/cliente/idCliente?id="+pedido.getCliente().getId(),
+          HttpMethod.GET, entity,
+          Cliente.class);
+        System.out.println("La respuesta" + respuestaCompleta.getStatusCode());
+        respuesta = respuestaCompleta.getBody();
+        return respuesta;
     }
 
 

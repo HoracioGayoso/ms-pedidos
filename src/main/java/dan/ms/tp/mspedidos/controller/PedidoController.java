@@ -21,11 +21,12 @@ public class PedidoController {
     @Autowired
     PedidoService pedidoService;
     @PostMapping
-    public ResponseEntity<?> guardar(@RequestBody Pedido pedido){
+    public ResponseEntity<?> guardar(@RequestBody Pedido pedido,@RequestHeader("Authorization") String token){
+        //System.out.println(token);
         try{
-        return ResponseEntity.ok().body(pedidoService.createPedido(pedido));}
+        return ResponseEntity.ok().body(pedidoService.createPedido(pedido,token));}
         catch(Exception e){
-            System.out.println(e.getMessage());
+            System.out.println("Error papu" +e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }

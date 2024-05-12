@@ -1,6 +1,9 @@
 package dan.ms.tp.mspedidos.service;
 
 import dan.ms.tp.mspedidos.modelo.Pedido;
+
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -16,6 +19,7 @@ public interface PedidoService {
     //Pedido createPedido(PedidoDtoForCreation p) throws Exception;
 
     Pedido cancelPedido(String id) throws Exception;
-    public Pedido createPedido(Pedido pedido) throws Exception;
+    @Retryable(value = {Exception.class}, maxAttempts = 3, backoff = @Backoff(delay= 10000))
+    public Pedido createPedido(Pedido pedido,String Token) throws Exception;
 
 }
